@@ -1,2 +1,27 @@
 ---
 # tasks file for flongo
+
+- name: create mount / vol dirs for mongod
+  file: path={{item}} owner=mongodb group=mongodb mode=755 state=directory
+  with_items:
+    - /srv/mongo/db
+    - /srv/mongo/configdb
+
+- name: make sure docker service is enabled and running
+  service: name=docker state=started enabled=yes
+
+- name: get list of docker networks
+  command: docker network ls
+  register: docker_networks
+
+- name: create docker network named flongo
+  command: docker network create flongo
+  when: "'flongo' no in docker_networks.stdout"
+
+- name: copy mongod service file
+  template: src=mongod.j2 dest=/etc/systemd/system/mongodb.service
+  notify: reload systemd daemon
+
+- name: enable and start mongod
+  service: name=mongodb.service state=started enabled=yes
+

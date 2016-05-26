@@ -1,0 +1,19 @@
+[Unit]
+Description=mongodb
+Requires=docker.service
+After=docker.service
+
+[Service]
+TimeoutStartSec=0
+Restart=on-failure
+User=root
+ExecStartPre=-/usr/bin/docker kill mongodb
+ExecStartPre=-/usr/bin/docker rm mongodb
+ExecStartPre=/usr/bin/docker pull mongodb:2.0-alpine
+ExecStart=/usr/bin/docker run --net flongo --name mongodb-master -h mongodb \
+  -v "/srv/mongodb/master:/var/mongodb_home" \
+  -p "27017:27017" mongodb:latest
+ExecStop=/usr/bin/docker stop mongodb
+
+[Install]
+WantedBy=multi.user.target
